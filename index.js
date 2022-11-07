@@ -7,16 +7,12 @@ require('dotenv').config()
 // middleware
 app.use(cors())
 app.use(express.json())
-
-console.log(process.env.DB_USER)
-console.log(process.env.DB_PASSWORD)
-
-
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.p11nzlu.mongodb.net/?retryWrites=true&w=majority`
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 async function run(){
     const  Foods = client.db('FoodDelivery').collection('foods')
+    const Reviews = client.db('FoodDelivery').collection('reviews')
     // get all foods 
     app.get('/services', async(req, res) =>{
          const query = {}
@@ -24,6 +20,14 @@ async function run(){
          const foods = await cursor.toArray()
          res.send(foods)
     })
+
+    // post review 
+    app.post('/reviews', async(req, res) =>{
+        const review = req.body 
+        const result = await Reviews.insertOne(review)
+        res.send(result)
+    })
+
 }
 
 run().catch(err => console.log(err))
