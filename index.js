@@ -45,6 +45,13 @@ async function run(){
         res.send(result)
     })
 
+    // get review filtering by gmail
+    app.get('/reviewWithGmail', async(req,res) =>{
+        const query = req.query
+        const cursor = Reviews.find(query)
+        const result = await cursor.toArray()
+        res.send(result)
+    })
 }
 
 run().catch(err => console.log(err))
