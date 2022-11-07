@@ -17,8 +17,13 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 async function run(){
     const  Foods = client.db('FoodDelivery').collection('foods')
-    const result = await Foods.insertOne({name:'burdger'})
-    console.log(result)
+    // get all foods 
+    app.get('/services', async(req, res) =>{
+         const query = {}
+         const cursor = Foods.find(query)
+         const foods = await cursor.toArray()
+         res.send(foods)
+    })
 }
 
 run().catch(err => console.log(err))
