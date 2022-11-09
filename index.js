@@ -13,12 +13,26 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run(){
     const  Foods = client.db('FoodDelivery').collection('foods')
     const Reviews = client.db('FoodDelivery').collection('reviews')
+    // get limited item 
+    app.get('/limitedService', async(req,res) =>{
+        const cursor = Foods.find({})
+        const result = await cursor.limit(3).toArray()
+        res.send(result)
+    })
     // get all service 
     app.get('/services', async(req, res) =>{
          const query = {}
          const cursor = Foods.find(query)
          const foods = await cursor.toArray()
          res.send(foods)
+    })
+
+    // get services with particular id 
+    app.get('/services/:id', async(req,res) =>{
+        const id = req.params.id 
+        const query = {_id: ObjectId(id)}
+        const result = await Foods.findOne(query)
+        res.send(result)
     })
 
     // add one service 
@@ -39,7 +53,7 @@ async function run(){
     app.get('/reviewWithId/:id', async(req,res) =>{
         const id = req.params.id 
         console.log(id)
-        const query = {_id: ObjectId(id)}
+        const query = {serviceId: id}
         const cursor = Reviews.find(query)
         const result = await cursor.toArray()
         res.send(result)
