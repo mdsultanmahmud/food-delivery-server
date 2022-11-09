@@ -52,7 +52,6 @@ async function run(){
     // get review by services id 
     app.get('/reviewWithId/:id', async(req,res) =>{
         const id = req.params.id 
-        console.log(id)
         const query = {serviceId: id}
         const cursor = Reviews.find(query)
         const result = await cursor.toArray()
@@ -64,6 +63,14 @@ async function run(){
         const query = req.query
         const cursor = Reviews.find(query)
         const result = await cursor.toArray()
+        res.send(result)
+    })
+
+    // delete single review 
+    app.delete('/reviewWithGmail/:id', async(req,res) =>{
+        const id = req.params.id 
+        const query = {_id: ObjectId(id)}
+        const result = await Reviews.deleteOne(query)
         res.send(result)
     })
 }
