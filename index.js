@@ -136,7 +136,8 @@ async function run() {
                 serviceName: review.serviceName,
                 serviceTitle: review.serviceTitle,
                 reviewMsg: review.reviewMsg,
-                reviewtime: review.reviewtime
+                reviewtime: review.reviewtime,
+                sortingTime: review.sortingTime
             }
         }
 
