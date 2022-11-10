@@ -50,15 +50,20 @@ async function run() {
     const Reviews = client.db('FoodDelivery').collection('reviews')
     // get limited item 
     app.get('/limitedService', async (req, res) => {
-        const cursor = Foods.find({})
+        const cursor = Foods.find({}).sort({
+            sortingTime: -1
+        })
         const result = await cursor.limit(3).toArray()
         res.send(result)
     })
     // get all service 
     app.get('/services', async (req, res) => {
         const query = {}
-        const cursor = Foods.find(query)
+        const cursor = Foods.find(query).sort({
+            sortingTime: -1
+        })
         const foods = await cursor.toArray()
+     
         res.send(foods)
     })
 
@@ -95,7 +100,9 @@ async function run() {
     app.get('/reviewWithId/:id', async (req, res) => {
         const id = req.params.id
         const query = { serviceId: id }
-        const cursor = Reviews.find(query)
+        const cursor = Reviews.find(query).sort({
+            sortingTime: -1
+        })
         const result = await cursor.toArray()
         res.send(result)
     })
@@ -103,7 +110,9 @@ async function run() {
     // get review filtering by gmail
     app.get('/reviewWithGmail', verifyJWT, async (req, res) => {
         const query = req.query
-        const cursor = Reviews.find(query)
+        const cursor = Reviews.find(query).sort({
+            sortingTime: -1
+        })
         const result = await cursor.toArray()
         res.send(result)
     })
