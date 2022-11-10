@@ -3,10 +3,44 @@ const app = express()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require('cors')
 const port = process.env.PORT || 5000
+const jwt = require('jsonwebtoken')
 require('dotenv').config()
+
 // middleware
 app.use(cors())
 app.use(express.json())
+
+// jwt implement
+app.post('/jwt', (req,res) =>{
+    const user = req.body 
+    const token = jwt.sign(user, process.env.ACCESS_TOKEN, {expiresIn:'2h'})
+    res.send({token})
+})
+
+
+// verify jwt token 
+const verifyJWT = (req,res,next) =>{
+    const authorizationTokenHead = req.headers.authtoken
+    if(!authorizationTokenHead){
+        return res.status(401).send({
+            success: false,
+            message: 'Unauthorize access'
+        })
+    }
+    const token = authorizationTokenHead.split(' ')[1]
+    jwt.verify(token, process.env.ACCESS_TOKEN, (error, decoded) =>{
+        if(error){
+            return res.status(401).send({
+                success: false,
+                message: 'Unauthorize access'
+            })
+        }
+        req.decoded = decoded
+        // next()
+    })
+}
+
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.p11nzlu.mongodb.net/?retryWrites=true&w=majority`
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
@@ -43,7 +77,7 @@ async function run(){
     })
 
     // post review 
-    app.post('/reviews', async(req, res) =>{
+    app.post('/reviews', async(req, res) =>{  
         const review = req.body 
         const result = await Reviews.insertOne(review)
         res.send(result)
@@ -59,7 +93,7 @@ async function run(){
     })
 
     // get review filtering by gmail
-    app.get('/reviewWithGmail', async(req,res) =>{
+    app.get('/reviewWithGmail',verifyJWT, async(req,res) =>{
         const query = req.query
         const cursor = Reviews.find(query)
         const result = await cursor.toArray()
