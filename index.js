@@ -10,44 +10,35 @@ require('dotenv').config()
 app.use(cors())
 app.use(express.json())
 
-// jwt implement
-app.post('/jwt', (req, res) => {
-    const user = req.body
-    // console.log(user)
-    const token = jwt.sign(user, process.env.ACCESS_TOKEN, { expiresIn: '2h' })
-    res.send({ token })
-})
 
 
-// verify jwt token 
-const verifyJWT = (req, res, next) => {
-    const authorizationTokenHead = req.headers.authaccesstoken
-    if (!authorizationTokenHead) {
-        return res.status(401).send({
-            success: false,
-            message: 'Unauthorize access'
-        })
+
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.p11nzlu.mongodb.net/?retryWrites=true&w=majority`
+const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+
+function verifyJWT(req,res,next){
+    const authHead = req.headers.accesstoken
+    if(!authHead){
+        return res.status(401).send({message:'Unauthorized Access'})
     }
-    const token = authorizationTokenHead.split(' ')[1]
-    jwt.verify(token, process.env.ACCESS_TOKEN, (error, decoded) => {
-        if (error) {
-            return res.status(401).send({
-                success: false,
-                message: 'Unauthorize access'
-            })
+    const token = authHead.split(' ')[1]
+    jwt.verify(token, process.env.ACCESS_TOKEN, function(err, decoded){
+        if(err){
+            return res.status(401).send({message:'Unauthorized Access'})
         }
         req.decoded = decoded
         next()
     })
 }
 
-
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.p11nzlu.mongodb.net/?retryWrites=true&w=majority`
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
-
 async function run() {
     const Foods = client.db('FoodDelivery').collection('foods')
     const Reviews = client.db('FoodDelivery').collection('reviews')
+    app.post('/jwt', (req, res) => {
+        const user = req.body
+        const token = jwt.sign(user,process.env.ACCESS_TOKEN,{expiresIn: '1h'})
+        res.send({token})
+    })
     // get limited item 
     app.get('/limitedService', async (req, res) => {
         const cursor = Foods.find({}).sort({
@@ -63,7 +54,7 @@ async function run() {
             sortingTime: -1
         })
         const foods = await cursor.toArray()
-     
+
         res.send(foods)
     })
 
@@ -108,7 +99,11 @@ async function run() {
     })
 
     // get review filtering by gmail
-    app.get('/reviewWithGmail', verifyJWT, async (req, res) => {
+    app.get('/reviewWithGmail', verifyJWT,async (req, res) => {
+        const decoded = req.decoded
+        if(decoded.email !== req.query.email){
+            return res.status(401).send({message:'Unauthorized Access'})
+        }
         const query = req.query
         const cursor = Reviews.find(query).sort({
             sortingTime: -1
@@ -145,10 +140,13 @@ async function run() {
             }
         }
 
-        const result = await Reviews.updateOne(query,updatedRev,option)
+        const result = await Reviews.updateOne(query, updatedRev, option)
         res.send(result)
 
     })
+
+
+
 }
 
 run().catch(err => console.log(err))
